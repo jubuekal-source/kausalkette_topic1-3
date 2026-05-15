@@ -15,8 +15,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 .app{position:relative;z-index:1;height:100vh;height:100dvh;display:flex;flex-direction:column}
 
-.card-area{flex:1;display:flex;align-items:center;justify-content:center;padding:1rem 1.5rem;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative}
-.card{max-width:480px;width:100%;text-align:center;opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s;pointer-events:none}
+.card-area{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:1rem 1.5rem;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;position:relative}
+.card{max-width:480px;width:100%;text-align:center;opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s;pointer-events:none;margin:auto 0}
 .card.active{opacity:1;transform:translateY(0);pointer-events:all}
 .card.exit-up{opacity:0;transform:translateY(-30px)}
 
@@ -70,6 +70,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .auto-clock .clock-face{width:100%;height:100%;border-radius:50%;border:1.5px solid var(--text3);position:relative}
 .auto-clock .clock-hand{position:absolute;bottom:50%;left:50%;width:1.5px;height:16px;background:var(--accent);transform-origin:bottom center;border-radius:1px}
 .auto-clock .clock-center{position:absolute;top:50%;left:50%;width:4px;height:4px;border-radius:50%;background:var(--accent);transform:translate(-50%,-50%)}
+.auto-plant{margin-top:.5rem;transition:opacity .5s;opacity:1}
+.auto-plant svg{overflow:visible}
+.auto-plant .plant-group{transition:transform .8s ease;transform-origin:30px 58px}
+.auto-plant .plant-stem{transition:stroke .6s}
+.auto-plant .plant-leaf{transition:fill .6s,opacity .6s}
 
 /* Three-panel swipe */
 .swipe-container{width:100%;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
@@ -111,14 +116,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .swipe-hint{font-size:.75rem;color:var(--text2);text-align:center;margin-top:.5rem;font-family:'Space Grotesk',sans-serif;font-weight:500}
 
 /* Unbequeme Frage */
-.frage-box{background:rgba(249,115,22,.04);border:1px solid rgba(249,115,22,.15);border-radius:12px;padding:1rem;margin-top:1rem;text-align:left;max-width:420px;margin-left:auto;margin-right:auto}
+.frage-box{background:rgba(249,115,22,.04);border:1px solid rgba(249,115,22,.15);border-radius:12px;padding:1rem;margin-top:1rem;text-align:left;max-width:420px;margin-left:auto;margin-right:auto;transition:border-color .3s}
+.frage-box.open{border-color:rgba(249,115,22,.4)}
 .frage-toggle{display:flex;align-items:center;gap:.5rem;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
 .frage-toggle .icon{font-size:1.1rem}
-.frage-toggle .label{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;color:var(--text2)}
-.frage-toggle .chevron{color:var(--text3);font-size:.8rem;margin-left:auto;transition:transform .3s}
-.frage-toggle .chevron.open{transform:rotate(180deg)}
+.frage-toggle .label{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;color:var(--text2);transition:color .3s}
+.frage-box.open .frage-toggle .label{color:var(--accent)}
+.frage-toggle .chevron{color:var(--text3);font-size:1rem;margin-left:auto;transition:transform .3s,color .3s;font-weight:700}
+.frage-toggle .chevron.open{transform:rotate(180deg);color:var(--accent)}
+.frage-close{display:none;text-align:center;margin-top:.75rem;padding:.5rem 1rem;border:1.5px solid rgba(249,115,22,.3);border-radius:8px;background:rgba(249,115,22,.08);color:var(--accent);font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .2s}
+.frage-close:active{transform:scale(.96)}
 .frage-body{max-height:0;overflow:hidden;transition:max-height .5s ease}
-.frage-body.open{max-height:800px}
+.frage-body.open{max-height:1000px}
 .frage-body-inner{padding-top:.75rem;font-size:.85rem;line-height:1.6;color:var(--text2)}
 .frage-body-inner strong{color:var(--text);font-weight:600}
 .frage-body-inner .highlight{color:var(--accent);font-weight:600}
@@ -334,7 +343,7 @@ function renderGesamt() {
     <div class="swipe-hint" id="swipeHint">← Wische, um die Kette zu drehen →</div>
   </div>
 
-  <div class="frage-box">
+  <div class="frage-box" id="frageBox">
     <div class="frage-toggle" onclick="toggleFrage()">
       <span class="icon">💬</span>
       <span class="label">„Aber ich muss doch informiert bleiben?"</span>
@@ -351,6 +360,7 @@ function renderGesamt() {
         <span class="pos">Bewusstes Informieren</span> = Du wählst gezielt, <em>was</em> du liest, <em>wann</em> du es liest, <em>wie lange</em> und <em>wie häufig</em>.<br><br>
         <span class="neg">Passives Berieseln</span> = Der Algorithmus entscheidet für dich — und dein Fokus übernimmt alles ungefiltert auf die Gästeliste.
       </div>
+      <div class="frage-close" id="frageClose" onclick="toggleFrage()">▲ Schließen</div>
     </div>
   </div>
 
@@ -374,8 +384,14 @@ function renderGesamt() {
 
 function toggleSources() { document.getElementById('sourcesList').classList.toggle('open'); }
 function toggleFrage() {
-  document.getElementById('frageBody').classList.toggle('open');
-  document.getElementById('frageChevron').classList.toggle('open');
+  const body = document.getElementById('frageBody');
+  const chev = document.getElementById('frageChevron');
+  const box = document.getElementById('frageBox');
+  const close = document.getElementById('frageClose');
+  const isOpen = body.classList.toggle('open');
+  chev.classList.toggle('open');
+  if (box) box.classList.toggle('open');
+  if (close) close.style.display = isOpen ? 'block' : 'none';
 }
 
 // Swipe
@@ -463,8 +479,20 @@ function runAutoLoop() {
           <div class="clock-center"></div>
         </div>
       </div>
+      <div class="auto-plant" id="autoPlant">
+        <svg viewBox="0 0 60 80" width="52" height="68">
+          <rect x="20" y="58" width="20" height="18" rx="2" fill="#6B5837" opacity=".5"/>
+          <g class="plant-group" id="plantGroup">
+            <line x1="30" y1="58" x2="30" y2="20" class="plant-stem" id="plantStem" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="22" cy="30" rx="8" ry="4" class="plant-leaf" id="pL1" fill="#22c55e" transform="rotate(-25 22 30)" opacity=".85"/>
+            <ellipse cx="38" cy="24" rx="7" ry="3.5" class="plant-leaf" id="pL2" fill="#22c55e" transform="rotate(20 38 24)" opacity=".75"/>
+            <ellipse cx="24" cy="42" rx="6" ry="3" class="plant-leaf" id="pL3" fill="#22c55e" transform="rotate(-15 24 42)" opacity=".65"/>
+            <ellipse cx="36" cy="36" rx="5.5" ry="2.8" class="plant-leaf" id="pL4" fill="#22c55e" transform="rotate(15 36 36)" opacity=".55"/>
+          </g>
+        </svg>
+      </div>
     </div>
-    <p style="margin-top:.75rem;color:var(--text3);font-size:.85rem" id="autoText">Autopilot...</p>`;
+    <p style="margin-top:.5rem;color:var(--text3);font-size:.85rem" id="autoText">Autopilot...</p>`;
   card.classList.add('active');
 
   const speeds = [
@@ -478,19 +506,38 @@ function runAutoLoop() {
   let clockAngle = 0;
   let round = 0;
 
+  const plantColors = ['#22c55e','#84cc16','#eab308','#f97316','#ef4444'];
+  const plantDroops = [0, 10, 22, 36, 52];
+
+  function updatePlant(r) {
+    const g = document.getElementById('plantGroup');
+    if (!g) return;
+    const color = plantColors[Math.min(r, 4)];
+    const droop = plantDroops[Math.min(r, 4)];
+    g.style.transform = `rotate(${droop}deg)`;
+    const stem = document.getElementById('plantStem');
+    if (stem) stem.setAttribute('stroke', color);
+    ['pL1','pL2','pL3','pL4'].forEach((id, i) => {
+      const l = document.getElementById(id);
+      if (l) {
+        l.setAttribute('fill', color);
+        l.style.opacity = String(Math.max(0.2, 0.85 - r * 0.15 - i * 0.05));
+      }
+    });
+  }
+
   function runRound() {
     if (autoAbort) return;
     if (round >= speeds.length) {
       autoAbort = true;
-      // Give DOM time to settle before transitioning
       setTimeout(() => {
         transitioning = false;
-        // Small additional delay to ensure all pending tick timeouts have cleared
         setTimeout(() => { next(); }, 50);
       }, 400);
       return;
     }
     resetChain();
+    updatePlant(round);
     const badge = document.getElementById('autoBadge');
     const autoText = document.getElementById('autoText');
     if (badge) badge.textContent = roundLabels[round];
